@@ -7,7 +7,6 @@ class test ():
     def testing(self):
         print ("I'm testing!")
 
-
 if __name__ == '__main__':
     print ("in main!")
     t = test()
