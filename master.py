@@ -52,7 +52,12 @@ class results(Resource):
     def get(self):
         global done_jobs
         return {"done_jobs" : done_jobs}
+    def delete(self):
+        global done_jobs
+        done_jobs = {}
+        return {"done_jobs" : done_jobs}
 api.add_resource(results, '/done', endpoint = 'done')
+
 
 if __name__ == '__main__':
     files = ['test1.py', 'test2.py']
