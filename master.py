@@ -1,4 +1,6 @@
 #!/usr/local/bin/python3
+import sys
+import os
 from flask import Flask, jsonify, request, make_response, abort, url_for
 # from flask_kerberos import requires_authentication
 from flask_restful import Api, Resource
@@ -31,14 +33,22 @@ class jobs(Resource):
         if job >= max_job:
             return {'done' : True}
         this_job = job
-        return {'job' : files[this_job]}
+        commit = 0
+        if this_job > 1:
+            commit = 1
+        if commit not in done_jobs and commit not in total:
+            done_jobs[commit] = {}
+            total[commit] = 0
+        return {'job' : files[this_job], 'commit' : commit}
     def post(self):
         global done_jobs
+        global total
         r = request.json
         if "job" in r and "avg" in r:
             print ("job:", r["job"])
             print ("avg:", r["avg"])
-            done_jobs[r["job"]] = r["avg"]
+            done_jobs[r["commit"]][r["job"]] = r["avg"]
+            total[r["commit"]] += r["avg"]
         else:
             print ("post", r)
         return {"thanks" : "pal"}
@@ -51,51 +61,33 @@ class results(Resource):
         super(results, self).__init__()
     def get(self):
         global done_jobs
-        return {"done_jobs" : done_jobs}
+        return {"done_jobs" : self.average()}
     def delete(self):
         global done_jobs
+        global job
+        global total
         done_jobs = {}
-        return {"done_jobs" : done_jobs}
+        job = -1
+        total = 0
+        return {"done_jobs" : []}
+    def average(self):
+        global total
+        global done_jobs
+        done = []
+        for commit in done_jobs:
+            done.append({\
+                    "commit" : commit, \
+                    "num_done": len(done_jobs[commit]), \
+                    "average": total[commit]/len(done_jobs[commit]) \
+                    })
+        return done
 api.add_resource(results, '/done', endpoint = 'done')
 
-
 if __name__ == '__main__':
-    files = ['test1.py', 'test2.py']
+    path="./testing_dir/"
+    files = os.listdir(path)
     job = -1
-    max_job = 2
+    max_job = len(files)
     done_jobs = {}
+    total = {}
     app.run(host='0.0.0.0', debug=True, port=8080)
-
-
-
-# class PalApi(Resource):
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         self.reqparse.add_argument('name', type = str, location = 'json')
-#         super(PalApi, self).__init__()
-#     def get(self, p_id):
-#         p = list(filter(lambda P: P['id'] == p_id, pals))
-#         if len(p) == 0:
-#             abort(404)
-#         return {'pal' : make_public_pal(p[0])}
-#     def put(self, p_id):
-#         p = list(filter(lambda P: P['id'] == p_id, pals))
-#         if len(p) == 0:
-#             abort(404)
-#         p = p[0]
-#         args = self.reqparse.parse_args()
-#         print ("args:", args)
-#         print ("name:", args['name'])
-#         p['name'] = args['name']
-#         # for k, v in args.iteritems():
-#             # if v != None:
-#                 # p[k] = v
-#         return { 'pal': make_public_pal(p) }
-#     def delete(self, p_id):
-#         p = list(filter(lambda P: P['id'] == p_id, pals))
-#         if len(p) == 0:
-#             abort(404)
-#         p = p[0]
-#         pals.remove(p)
-#         return { 'success' : True }
-# api.add_resource(PalApi, '/pals/<int:p_id>', endpoint = 'pal')
