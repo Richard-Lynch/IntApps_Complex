@@ -14,7 +14,7 @@ def not_found(error):
 def bad_request(error):
     return make_response(jsonify({'error': 'Bad request'}), 400)
 @app.errorhandler(403)
-def unauthorized():
+def unauthed():
     return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
 class jobs(Resource):
@@ -32,17 +32,33 @@ class jobs(Resource):
             return {'done' : True}
         this_job = job
         return {'job' : files[this_job]}
-    def put(self, p_id):
-        pass
+    def post(self):
+        global done_jobs
+        r = request.json
+        if "job" in r and "avg" in r:
+            print ("job:", r["job"])
+            print ("avg:", r["avg"])
+            done_jobs[r["job"]] = r["avg"]
+        else:
+            print ("post", r)
+        return {"thanks" : "pal"}
     def delete(self, p_id):
         pass
 api.add_resource(jobs, '/jobs', endpoint = 'jobs')
 
+class results(Resource):
+    def __init__(self):
+        super(results, self).__init__()
+    def get(self):
+        global done_jobs
+        return {"done_jobs" : done_jobs}
+api.add_resource(results, '/done', endpoint = 'done')
 
 if __name__ == '__main__':
     files = ['test1.py', 'test2.py']
     job = -1
     max_job = 2
+    done_jobs = {}
     app.run(host='0.0.0.0', debug=True, port=8080)
 
 
