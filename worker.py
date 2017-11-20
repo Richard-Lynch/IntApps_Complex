@@ -8,21 +8,52 @@
 from radon.complexity import cc_rank, SCORE
 from radon.cli import Config
 from radon.cli.harvest import CCHarvester
-paths = "/Users/richie/programs/IntApps_Complex/"
+paths="./testing_dir"
+ex = "./.git/*"
 config = Config(
-    exclude=None,
-    ignore=None,
+    exclude=ex,
+    ignore="worker.py",
     order=SCORE,
     no_assert=True,
-    show_closures=False,
+    show_complexity=True,
+    average=True,
+    total_average=True,
+    show_closures=True,
     min='A',
-    max='F',
+    max='F'
 )
 print ("config", config)
-h = CCHarvester(paths, config)
+h = CCHarvester([paths], config)
 print ("harvester made")
-results = h._to_dicts()
-print ("results", results)
+print ("h", h)
+results = h.to_terminal()
+for result in results:
+    # for value in result:
+    #     print ("v:", value)
+    line, args, kwargs = result[0], result[1], result[2]
+    print ("line", line)
+    print ("type", type(line))
+    print ("args", args)
+    print ("kwargs", kwargs)
+    if type(line) == str:
+        print(line.format(*args, **kwargs))
+
+results = h.results
+for result in results:
+    print ("r:", result)
+fileName = results[0][0]
+print ("fn:", fileName)
+funcs = results[0][1]
+print ("funcs:", funcs)
+    # print (line.format(*args, **kwargs))
+    # for value in result[1]:
+        # print ("v:", value)
+# h.to_terminal()
+# print ("results", results)
+# results = h.results()
+# jresults = h.as_json()
+
+# print ("results", results)
 
 # app = Flask(__name__)
 # api = Api(app)
