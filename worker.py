@@ -68,6 +68,10 @@ class worker ():
                 self.done = True
                 break
             # if unknown message, stop asking for jobs
+            elif "start" in job:
+                print ("master hasnt started yet")
+                self.done = True
+                break
             else:
                 print ("unknown message:")
                 print (job)

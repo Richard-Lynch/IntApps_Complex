@@ -35,7 +35,11 @@ class start(Resource):
             mast.user = r["user"]
             mast.repo = r["repo"]
             mast.run()
-            return { "success" : True }
+            return { "started" : True }
+        elif mast.start == True and "stop" in r:
+            mast.start = False
+            mast.delete_results()
+            return { "stoped" : True } 
         else:
             return { "success" : False }
 api.add_resource(start, '/start', endpoint = 'start')
@@ -45,14 +49,17 @@ class jobs(Resource):
         super(jobs, self).__init__()
     def get(self):
         global mast
-        # get the next valid job
-        this_job, this_file, this_commit = mast.get_job()
-        # if this job is none, we're done
-        if this_job == None:
-            return {'done' : True}
-        # otherwise, respond with job
+        if mast.start == True:
+            # get the next valid job
+            this_job, this_file, this_commit = mast.get_job()
+            # if this job is none, we're done
+            if this_job == None:
+                return {'done' : True}
+            # otherwise, respond with job
+            else:
+                return {'url' : this_job, 'commit' : this_commit, "path" : this_file}
         else:
-            return {'url' : this_job, 'commit' : this_commit, "path" : this_file}
+            return {'start' : False}
     def post(self):
         r = request.json
         if "url" in r and "avg" in r and "path" in r:
