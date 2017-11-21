@@ -1,6 +1,8 @@
 #!/usr/local/bin/python3
 import sys
 import os
+import requests
+import json
 from flask import Flask, jsonify, request, make_response, abort, url_for
 # from flask_kerberos import requires_authentication
 from flask_restful import Api, Resource
@@ -83,11 +85,76 @@ class results(Resource):
         return done
 api.add_resource(results, '/done', endpoint = 'done')
 
+def make_address(owner, repo):
+    return "https://api.github.com/repos/" + str(owner) + "/" + str(repo)
+
+def get_commits(address):
+    global token
+    payload = {"access_token" : token}
+    address += "/commits"
+    commits = requests.get(address, params=payload).json()
+    return commits
+
+def get_trees(owner, repo):
+    global token
+    print("t:", token)
+    payload = {"access_token" : token, "recursive" : 1}
+    address = make_address(owner, repo)
+    print ("addres", address)
+    commits = get_commits(address)
+    print ("commits")
+    trees = {}
+    # each tree contains all of the files in a commit, with the commits sha as a key
+    print ("commits:", commits)
+    for commit in commits:
+        print ("getting commits")
+        if "sha" in commit:
+            sha = commit["sha"]
+            address += "/git/trees/" + sha
+            # each tree has a list of files or dirs
+            tree = get_dirs(requests.get(address, params=payload).json()['trees'])
+            trees[sha] = tree
+        else:
+            print ("issue with commit:", commit)
+    return trees
+
+def get_dirs(tree):
+    new_tree = []
+    print ("in get dirs")
+    # for each file in the dir
+    for file_dir in tree:
+        print ("getting file_dir", file_dir)
+        # if item is a dir
+        if "type" in file_dir and file_dir["type"] == "tree":
+            # call recursivly and create flat structure
+            print ("calling rec")
+            new_tree.extend(get_dirs(file_dir))
+        # if item is a file
+        else:
+            # append to list
+            print ("adding to file")
+            new_tree.append(file_dir)
+    return new_tree
+
 if __name__ == '__main__':
     path="./testing_dir/"
     files = os.listdir(path)
     job = -1
     max_job = len(files)
+#----------------
+    token = ""
+    with open ("token", "r") as f:
+        token = f.read()
+        print("t:", token)
+    print("t:", token)
+    owner="Richard-Lynch"
+    repo="IntApps_Complex"
+    trees = get_trees(owner, repo)
+    for sha in trees:
+        print ("sha", sha)
+
+    sys.exit
+#----------------    
     done_jobs = {}
     total = {}
     app.run(host='0.0.0.0', debug=True, port=8080)
