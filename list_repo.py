@@ -2,8 +2,6 @@
 
 import requests
 import json
-owner="Richard-Lynch"
-repo="IntApps_Complex"
 # sha="a5ec11596e5569a195413a6eff28c83a7da153cf"
 # sha="master"
 # address="https://api.github.com/repos/" + owner + "/" + repo + "/commits/" + sha
@@ -31,12 +29,19 @@ repo="IntApps_Complex"
 #         print ("dunno what that is")
 
 
+owner="Richard-Lynch"
+repo="IntApps_Complex"
 address="https://api.github.com/repos/" + owner + "/" + repo + "/commits"
 # print ("address:", address)
 r = requests.get(address).json()
 for key in r:
-    print ("K:", key["sha"])
-    sha = key["sha"]
+    print ("K:", key)
+    if "sha" in key:
+        print ("sha:", key["sha"])
+    else:
+        print ("no sha")
+    continue
+    # sha = key["sha"]
     address="https://api.github.com/repos/" + owner + "/" + repo + "/git/trees/" + sha
 # r = requests.get(r["url"]).json()
     r = requests.get(address).json()
