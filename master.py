@@ -64,7 +64,6 @@ class jobs(Resource):
         return {"thanks" : "pal"}
 api.add_resource(jobs, '/jobs', endpoint = 'jobs')
 
-
 class results(Resource):
     def __init__(self):
         super(results, self).__init__()
@@ -79,9 +78,6 @@ class results(Resource):
             return {"error" : ["still active"]}
 api.add_resource(results, '/done', endpoint = 'done')
 
-
-
-
 class master():
     def __init__(self, token):
         self.token = token
@@ -90,11 +86,15 @@ class master():
         self.repo="flask_test"
         self.job_lock = Lock()
         self.results_lock = Lock()
+        # self.done_files = {} # dict of done file, sha of commit as key, list of done files as values
+        # self.current_commit = 0
+        # self.current_file = 0
+        # self.done_commits = 0
+        # self.done_files = {} # dict of done file, sha of commit as key, list of done files as values
 
     def run(self):
         self.job_lock.acquire()
         self.results_lock.acquire()
-        self.start = True
         self.trees, self.commits = self.get_trees(self.owner, self.repo)
         self.trees = self.remove_trees(self.trees)
         # print
@@ -108,6 +108,7 @@ class master():
         self.done_files = {} # dict of done file, sha of commit as key, list of done files as values
         self.job_lock.release()
         self.results_lock.release()
+        self.start = True
 
     def delete_results(self):
         if self.start == False:
@@ -174,8 +175,8 @@ class master():
 
     def get_trees(self, owner, repo):
         payload = {"access_token" : str(self.token), "recursive" : 1}
-        address = make_address(owner, repo)
-        commits = get_commits(address)
+        address = self.make_address(owner, repo)
+        commits = self.get_commits(address)
         trees = {}
         commit_list = []
         # each tree contains all of the files in a commit, with the commits sha as a key
