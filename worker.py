@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 import sys
 # from radon.complexity import cc_rank, cc_visit
-from radon.complexity import cc_rank, SCORE
+from radon.complexity import cc_rank, SCORE, cc_visit
 from radon.cli import Config
 from radon.cli.harvest import CCHarvester
 import json
@@ -59,6 +59,10 @@ class worker ():
 
     def compute(self, paths):
         print ("PATH:", paths)
+        # with open('test_out.txt', 'r') as f:
+        #     cc = cc_visit (f.read())
+        #     for item in cc:
+        #         print ("item", item)
         h = CCHarvester([paths], self.config)
         results = h.to_terminal()
         for result in results:

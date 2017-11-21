@@ -35,13 +35,13 @@ address="https://api.github.com/repos/" + owner + "/" + repo + "/commits"
 # print ("address:", address)
 r = requests.get(address).json()
 for key in r:
-    print ("K:", key)
+    # print ("K:", key)
     if "sha" in key:
-        print ("sha:", key["sha"])
+        sha = key["sha"]
+        print ("sha:", sha)
     else:
         print ("no sha")
-    continue
-    # sha = key["sha"]
+    # continue
     address="https://api.github.com/repos/" + owner + "/" + repo + "/git/trees/" + sha
 # r = requests.get(r["url"]).json()
     r = requests.get(address).json()
@@ -49,9 +49,22 @@ for key in r:
 
     for file_dir in r['tree']:
         print (file_dir["path"])
+        if "url" in file_dir:
+            print ("\turl:", file_dir["url"])
+        if "sha" in file_dir:
+            print ("\tsha:", file_dir["sha"])
         if file_dir["type"] == "blob":
             print ("\tthis is a file")
         elif file_dir["type"] == "tree":
             print ("\tthis is a dir")
         else:
             print ("dunno what that is")
+# headers = {'Accept' : 
+r = requests.get("https://api.github.com/repos/Richard-Lynch/IntApps_Complex/git/blobs/efa5d9d2de7c715fad7cee7458828d1fe3f22a88", headers={'Accept' : 'application/vnd.github.v3.raw'})
+
+print ("R:",  r.text)
+with open ('test_out.txt', 'w') as f:
+    f.write(r.text)
+    print ("data written")
+
+# r = requests.get(https://api.github.com/repos/Richard-Lynch/IntApps_Complex/git/blobs/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391)

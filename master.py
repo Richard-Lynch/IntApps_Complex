@@ -68,7 +68,7 @@ class results(Resource):
         global total
         done_jobs = {}
         job = -1
-        total = 0
+        total = {}
         return {"done_jobs" : []}
     def average(self):
         global total
