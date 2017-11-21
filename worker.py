@@ -32,52 +32,78 @@ class worker ():
             min='A',
             max='F'
             )
-        self.get_job='http://127.0.0.1:8080/jobs'
-        self.send_avg='http://127.0.0.1:8080/jobs'
-        self.parent_dir="./testing_dir/"
+        self.get_job_address='http://127.0.0.1:8080/jobs'
+        self.send_avg_address='http://127.0.0.1:8080/jobs'
+
+    def get_job(self):
+        return requests.get(self.get_job_address).json()
+
+    def send_avg(self, avg, job):
+        response = requests.post(self.send_avg_address, json = { \
+                'url' : job["url"], \
+                'avg' : avg, \
+                'commit' : job["commit"], \
+                'path' : job["path"] \
+                }).json()
+        return response
+
     def run (self):
         print ("running")
         self.done = False
         while self.done == False:
-            r = requests.get(self.get_job).json()
-            print ("r:", r)
-            if "job" in r:
-                print ("gonna compute: ", r["job"])
-                print ("from commit:", r["commit"])
-                paths=self.parent_dir + str(r["job"])
-                avg = self.compute(paths)
-                if avg != None:
-                    r = requests.post(self.send_avg, json = { 'job' : r["job"], 'avg' : avg, 'commit' : r["commit"] } ).json()
-                    print (r)
-                else:
-                    pass
-                    # print ("no avg!?")
-            else:
-                print ("no compute")
+            # get a job from master
+            job = self.get_job()
+            # if its a valid job (not exhuastive)
+            if "url" in job:
+                # compute avg
+                avg = self.compute(job)
+                # post the avg back to master
+                post_response = self.send_avg(avg, job)
+                # if received a valid response
+                if post_response != None:
+                    print ("post response:", post_response)
+            # if done, stop asking for jobs
+            elif "done" in job:
+                print ("master is done")
                 self.done = True
+                break
+            # if unknown message, stop asking for jobs
+            else:
+                print ("unknown message:")
+                print (job)
+                self.done = True
+                break
         print ("Done!")
 
     def compute(self, paths):
-        print ("PATH:", paths)
-        # with open('test_out.txt', 'r') as f:
-        #     cc = cc_visit (f.read())
-        #     for item in cc:
-        #         print ("item", item)
-        h = CCHarvester([paths], self.config)
-        results = h.to_terminal()
+        # print data from master
+        for key in paths:
+            print ("{}: {}".format(key, paths[key]))
+        # get auth token for github access
+        token = ""
+        with open ("token", "r") as f:
+            token = f.read().split()[0]
+            if token == "":
+                return None
+        # download file
+        files = './temp/{}.py'.format(paths["commit"])
+        with open(files, 'w') as f:
+            f.write( requests.get(\
+                    paths['url'], \
+                    params={"access_token" : str(token)}, \
+                    headers={'Accept' : 'application/vnd.github.v3.raw'}\
+                    ).text)
+        #compute complexity
+        results = CCHarvester([files], self.config).to_terminal()
+        # extract avg from results
         for result in results:
             line, args, kwargs = result[0], result[1], result[2]
             if type(line) == str:
                 if "Average complexity:" in line:
-                    print ("FOUND THE AVG!")
                     avg = args[2]
                     print ("AVG", avg)
                     return avg
-                # print(line.format(*args, **kwargs))
-            else:
-                for l in line:
-                    pass
-                    # print ("{}".format(l))
+        print ("cant find avg")
         return None
 
 if __name__ == '__main__':

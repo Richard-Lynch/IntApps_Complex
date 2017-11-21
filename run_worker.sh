@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ./worker.py
-./get_done.sh
-./delete_done.sh
+./result_scripts/get_done.sh
+./result_scripts/delete_done.sh
 
 
