@@ -35,10 +35,12 @@ class start(Resource):
             mast.user = r["user"]
             mast.repo = r["repo"]
             mast.run()
+            print ("STARTING")
             return { "started" : True }
         elif mast.start == True and "stop" in r:
             mast.start = False
             mast.delete_results()
+            print ("STOPPING")
             return { "stoped" : True } 
         else:
             return { "success" : False }
